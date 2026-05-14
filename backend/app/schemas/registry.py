@@ -1,5 +1,9 @@
 """
 BHIV Registry — Pydantic API Schemas
+
+These schemas define the exact contract for all API requests and responses.
+They are separate from the database models — this separation is intentional
+and keeps the API surface clean and evolvable.
 """
 
 from pydantic import BaseModel, Field, field_validator
@@ -13,7 +17,13 @@ from app.models.registry import (
     DatasetStatus, SchemaStatus
 )
 
+
+# ─────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────
+
 CANONICAL_ID_PATTERN = re.compile(r"^BHIV-DS-[A-Z0-9\-]{3,80}$")
+
 
 def validate_canonical_id(v: str) -> str:
     if not CANONICAL_ID_PATTERN.match(v):
@@ -23,6 +33,10 @@ def validate_canonical_id(v: str) -> str:
         )
     return v.upper()
 
+
+# ─────────────────────────────────────────────
+# DATASET SCHEMAS
+# ─────────────────────────────────────────────
 
 class IngestionReference(BaseModel):
     system: str
@@ -36,18 +50,22 @@ class DatasetRegisterRequest(BaseModel):
     dataset_name: str = Field(..., min_length=3, max_length=255)
     description: Optional[str] = None
     version: str = Field(default="1.0.0")
+
     source_system: str = Field(..., min_length=2, max_length=255)
     source_location: Optional[str] = None
     owner_name: str = Field(..., min_length=2, max_length=255)
     owner_team: Optional[str] = None
     owner_contact: Optional[str] = None
+
     domain_primary: str = Field(..., min_length=2, max_length=100)
     domain_tags: List[str] = Field(default_factory=list)
+
     trust_level: TrustLevel = TrustLevel.UNVERIFIED
     replay_compatibility: ReplayCompatibility = ReplayCompatibility.NONE
     replay_notes: Optional[str] = None
     simulation_compatibility: SimulationCompatibility = SimulationCompatibility.INCOMPATIBLE
     simulation_notes: Optional[str] = None
+
     ingestion_reference: Optional[IngestionReference] = None
     extended_metadata: Optional[Dict[str, Any]] = None
 
@@ -81,23 +99,29 @@ class DatasetResponse(BaseModel):
     description: Optional[str]
     version: str
     status: DatasetStatus
+
     source_system: str
     source_location: Optional[str]
     owner_name: str
     owner_team: Optional[str]
     owner_contact: Optional[str]
+
     domain_primary: str
     domain_tags: List[str]
+
     trust_level: TrustLevel
     trust_verified_by: Optional[str]
     trust_verified_at: Optional[datetime]
+
     replay_compatibility: ReplayCompatibility
     replay_notes: Optional[str]
     simulation_compatibility: SimulationCompatibility
     simulation_notes: Optional[str]
+
     schema_version: Optional[str]
     ingestion_reference: Optional[Dict[str, Any]]
     extended_metadata: Optional[Dict[str, Any]]
+
     registered_at: datetime
     updated_at: datetime
 
@@ -111,9 +135,13 @@ class DatasetListResponse(BaseModel):
     results: List[DatasetResponse]
 
 
+# ─────────────────────────────────────────────
+# SCHEMA SCHEMAS
+# ─────────────────────────────────────────────
+
 class FieldDefinition(BaseModel):
     field_name: str = Field(..., min_length=1)
-    data_type: str
+    data_type: str = Field(..., description="e.g. string, float, integer, boolean, datetime, json")
     nullable: bool = True
     description: Optional[str] = None
     constraints: Optional[Dict[str, Any]] = None
@@ -152,8 +180,15 @@ class SchemaResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ─────────────────────────────────────────────
+# PROVENANCE SCHEMAS
+# ─────────────────────────────────────────────
+
 class ProvenanceCreateRequest(BaseModel):
-    event_type: str = Field(..., description="ORIGIN | INGESTION | TRANSFORMATION | VALIDATION | TRUST_CHANGE | SCHEMA_CHANGE")
+    event_type: str = Field(
+        ...,
+        description="ORIGIN | INGESTION | TRANSFORMATION | VALIDATION | TRUST_CHANGE | SCHEMA_CHANGE"
+    )
     source_system: Optional[str] = None
     source_reference: Optional[str] = None
     ingestion_pipeline: Optional[str] = None
@@ -191,6 +226,10 @@ class ProvenanceResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# ─────────────────────────────────────────────
+# DISCOVERY SCHEMAS
+# ─────────────────────────────────────────────
+
 class DatasetSearchFilters(BaseModel):
     domain_primary: Optional[str] = None
     domain_tags: Optional[List[str]] = None
@@ -199,16 +238,25 @@ class DatasetSearchFilters(BaseModel):
     simulation_compatibility: Optional[SimulationCompatibility] = None
     owner_team: Optional[str] = None
     status: Optional[DatasetStatus] = DatasetStatus.ACTIVE
-    search_text: Optional[str] = None
+    search_text: Optional[str] = Field(None, description="Searches name and description")
+
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=20, ge=1, le=100)
 
+
+# ─────────────────────────────────────────────
+# TRUST CLASSIFICATION
+# ─────────────────────────────────────────────
 
 class TrustUpdateRequest(BaseModel):
     trust_level: TrustLevel
     verified_by: str
     governance_notes: Optional[str] = None
 
+
+# ─────────────────────────────────────────────
+# COMMON RESPONSES
+# ─────────────────────────────────────────────
 
 class SuccessResponse(BaseModel):
     success: bool = True
@@ -219,3 +267,34 @@ class ErrorResponse(BaseModel):
     success: bool = False
     error: str
     detail: Optional[str] = None
+
+
+# ─────────────────────────────────────────────
+# RELATIONSHIP SCHEMAS
+# ─────────────────────────────────────────────
+
+class RelationshipCreateRequest(BaseModel):
+    parent_dataset_id: UUID
+    child_dataset_id: UUID
+    relationship_type: str = Field(
+        ...,
+        description="DERIVED_FROM | DEPENDS_ON | MERGED_FROM | FILTERED_FROM"
+    )
+    description: Optional[str] = None
+    transformation_notes: Optional[str] = None
+    chain_replay_safe: bool = False
+    created_by: str
+
+
+class RelationshipResponse(BaseModel):
+    id: UUID
+    parent_dataset_id: UUID
+    child_dataset_id: UUID
+    relationship_type: str
+    description: Optional[str]
+    transformation_notes: Optional[str]
+    chain_replay_safe: bool
+    created_by: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
