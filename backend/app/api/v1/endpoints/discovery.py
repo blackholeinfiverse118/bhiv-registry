@@ -17,6 +17,10 @@ from app.db.base import get_db
 from app.services.discovery_service import DiscoveryService
 from app.schemas.registry import DatasetResponse
 
+from app.services.provenance_service import ProvenanceService
+from uuid import UUID
+
+
 router = APIRouter(prefix="/discovery", tags=["Discovery"])
 
 
@@ -75,3 +79,26 @@ async def get_datasets_by_team(
 ):
     """Get all datasets owned by a specific team."""
     return await DiscoveryService.find_datasets_by_owner_team(db, owner_team)
+
+
+@router.get("/provenance/validate/{dataset_id}")
+async def validate_provenance_chain(
+    dataset_id: UUID,
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
+    """
+    Validate the provenance chain for a single dataset.
+    Checks completeness, trust consistency and TANTRA readiness.
+    """
+    return await ProvenanceService.validate_chain(db, dataset_id)
+
+
+@router.get("/provenance/validate-all")
+async def validate_all_provenance(
+    db: AsyncSession = Depends(get_db)
+) -> List[Dict[str, Any]]:
+    """
+    Validate provenance chains for all datasets.
+    Returns a full registry-wide validation report.
+    """
+    return await ProvenanceService.validate_all(db)
