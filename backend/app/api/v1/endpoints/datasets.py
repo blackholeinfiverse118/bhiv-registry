@@ -128,3 +128,35 @@ async def add_provenance(
     if not record:
         raise HTTPException(status_code=404, detail="Dataset not found.")
     return record
+
+
+@router.post("/{dataset_id}/trust/transition", response_model=DatasetResponse)
+async def transition_trust(
+    dataset_id: UUID,
+    payload: TrustUpdateRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Formally transition trust level with validation.
+    Enforces valid transitions — not all trust changes are allowed.
+    Requires governance note when moving to QUARANTINE or UNVERIFIED.
+    """
+    from app.services.trust_service import TrustService
+    try:
+        dataset = await TrustService.transition_trust(db, dataset_id, payload)
+        if not dataset:
+            raise HTTPException(status_code=404, detail="Dataset not found.")
+        return dataset
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+@router.get("/{dataset_id}/trust/history", response_model=List[ProvenanceResponse])
+async def get_trust_history(
+    dataset_id: UUID,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get the full trust change history for a dataset."""
+    from app.services.trust_service import TrustService
+    records = await TrustService.get_trust_history(db, dataset_id)
+    return records

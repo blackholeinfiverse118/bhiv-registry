@@ -95,7 +95,16 @@ GRANT ALL PRIVILEGES ON DATABASE bhiv_registry TO bhiv;
 GRANT ALL ON SCHEMA public TO bhiv;
 ```
 
-### 6. Run the API
+### 6. Run database migrations
+```bash
+cd backend
+alembic upgrade head
+```
+
+This creates all tables automatically. Run this every time you pull new changes.
+
+
+### 7. Run the API
 ```bash
 cd backend
 # Windows
@@ -107,7 +116,7 @@ export PYTHONPATH=.
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 7. Open API docs
+### 8. Open API docs
 ```
 http://localhost:8000/docs
 ```
