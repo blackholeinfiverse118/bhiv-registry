@@ -298,3 +298,66 @@ class RelationshipResponse(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────
+# ONBOARDING SCHEMAS
+# ─────────────────────────────────────────────
+
+class OnboardingSubmitRequest(BaseModel):
+    proposed_canonical_id: str = Field(..., description="e.g. BHIV-DS-MARKET-EQUITY-001")
+    dataset_name: str = Field(..., min_length=3, max_length=255)
+    description: Optional[str] = None
+    source_system: str = Field(..., min_length=2, max_length=255)
+    owner_name: str = Field(..., min_length=2, max_length=255)
+    owner_team: Optional[str] = None
+    domain_primary: str = Field(..., min_length=2, max_length=100)
+    domain_tags: List[str] = Field(default_factory=list)
+    proposed_trust_level: TrustLevel = TrustLevel.UNVERIFIED
+    proposed_replay_compatibility: ReplayCompatibility = ReplayCompatibility.NONE
+    proposed_simulation_compatibility: SimulationCompatibility = SimulationCompatibility.INCOMPATIBLE
+    submitted_by: str
+    submission_notes: Optional[str] = None
+
+    @field_validator("proposed_canonical_id")
+    @classmethod
+    def check_canonical_id(cls, v):
+        return validate_canonical_id(v)
+
+
+class OnboardingReviewRequest(BaseModel):
+    decision: str = Field(..., description="APPROVED or REJECTED")
+    reviewed_by: str
+    review_notes: Optional[str] = None
+
+    @field_validator("decision")
+    @classmethod
+    def check_decision(cls, v):
+        if v.upper() not in {"APPROVED", "REJECTED"}:
+            raise ValueError("Decision must be APPROVED or REJECTED")
+        return v.upper()
+
+
+class OnboardingResponse(BaseModel):
+    id: UUID
+    status: str
+    proposed_canonical_id: str
+    dataset_name: str
+    description: Optional[str]
+    source_system: str
+    owner_name: str
+    owner_team: Optional[str]
+    domain_primary: str
+    domain_tags: List[str]
+    proposed_trust_level: TrustLevel
+    proposed_replay_compatibility: ReplayCompatibility
+    proposed_simulation_compatibility: SimulationCompatibility
+    submitted_by: str
+    submitted_at: datetime
+    submission_notes: Optional[str]
+    reviewed_by: Optional[str]
+    reviewed_at: Optional[datetime]
+    review_notes: Optional[str]
+    registered_dataset_id: Optional[UUID]
+
+    model_config = {"from_attributes": True}

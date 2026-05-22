@@ -190,3 +190,63 @@ class DatasetRelationship(Base):
 
     def __repr__(self):
         return f"<DatasetRelationship {self.parent_dataset_id} → {self.child_dataset_id}>"
+    
+
+class OnboardingStatus(str, PyEnum):
+    PENDING_REVIEW = "PENDING_REVIEW"
+    APPROVED       = "APPROVED"
+    REJECTED       = "REJECTED"
+    REGISTERED     = "REGISTERED"
+
+
+class DatasetOnboardingRequest(Base):
+    """
+    Formal onboarding request for a new dataset.
+    Datasets go through this review process before
+    being registered in the canonical registry.
+    """
+    __tablename__ = "dataset_onboarding_requests"
+
+    id           = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    status       = Column(Enum(OnboardingStatus), nullable=False,
+                         default=OnboardingStatus.PENDING_REVIEW)
+
+    # Proposed dataset details
+    proposed_canonical_id = Column(String(100), nullable=False)
+    dataset_name          = Column(String(255), nullable=False)
+    description           = Column(Text, nullable=True)
+    source_system         = Column(String(255), nullable=False)
+    owner_name            = Column(String(255), nullable=False)
+    owner_team            = Column(String(255), nullable=True)
+    domain_primary        = Column(String(100), nullable=False)
+    domain_tags           = Column(ARRAY(String), nullable=False, default=list)
+
+    # Proposed classifications
+    proposed_trust_level             = Column(Enum(TrustLevel), nullable=False,
+                                              default=TrustLevel.UNVERIFIED)
+    proposed_replay_compatibility    = Column(Enum(ReplayCompatibility), nullable=False,
+                                              default=ReplayCompatibility.NONE)
+    proposed_simulation_compatibility = Column(Enum(SimulationCompatibility), nullable=False,
+                                               default=SimulationCompatibility.INCOMPATIBLE)
+
+    # Submission details
+    submitted_by  = Column(String(255), nullable=False)
+    submitted_at  = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    submission_notes = Column(Text, nullable=True)
+
+    # Review details
+    reviewed_by   = Column(String(255), nullable=True)
+    reviewed_at   = Column(DateTime(timezone=True), nullable=True)
+    review_notes  = Column(Text, nullable=True)
+
+    # If approved — link to registered dataset
+    registered_dataset_id = Column(UUID(as_uuid=True),
+                                   ForeignKey("datasets.id"), nullable=True)
+
+    __table_args__ = (
+        Index("ix_onboarding_status", "status"),
+        Index("ix_onboarding_submitted_by", "submitted_by"),
+    )
+
+    def __repr__(self):
+        return f"<OnboardingRequest {self.proposed_canonical_id} | {self.status}>"
