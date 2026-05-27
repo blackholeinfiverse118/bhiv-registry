@@ -69,10 +69,13 @@ async def freeze_schema(
     Once frozen, field definitions cannot be changed.
     This is required before a schema can be used in production.
     """
-    schema = await SchemaService.freeze_schema(db, schema_id)
-    if not schema:
-        raise HTTPException(status_code=404, detail="Schema not found.")
-    return schema
+    try:
+        schema = await SchemaService.freeze_schema(db, schema_id)
+        if not schema:
+            raise HTTPException(status_code=404, detail="Schema not found.")
+        return schema
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @router.patch("/{schema_id}/activate", response_model=SchemaResponse)
@@ -81,7 +84,10 @@ async def activate_schema(
     db: AsyncSession = Depends(get_db)
 ):
     """Activate a draft schema."""
-    schema = await SchemaService.activate_schema(db, schema_id)
-    if not schema:
-        raise HTTPException(status_code=404, detail="Schema not found.")
-    return schema
+    try:
+        schema = await SchemaService.activate_schema(db, schema_id)
+        if not schema:
+            raise HTTPException(status_code=404, detail="Schema not found.")
+        return schema
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))

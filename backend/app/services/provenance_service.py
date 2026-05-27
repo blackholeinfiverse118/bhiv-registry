@@ -111,9 +111,12 @@ class ProvenanceService:
 
         return {
             "valid": len(issues) == 0,
+            "is_valid": len(issues) == 0,
             "dataset_id": str(dataset_id),
             "canonical_id": dataset.canonical_id,
             "record_count": len(records),
+            "event_count": len(records),
+            "last_event_type": records[-1].event_type if records else None,
             "event_types_present": list(set(event_types)),
             "trust_change_count": len(trust_changes),
             "current_trust": dataset.trust_level.value,
