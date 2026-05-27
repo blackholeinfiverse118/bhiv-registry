@@ -108,7 +108,10 @@ class Dataset(Base):
     )
 
     def __repr__(self):
-        return f"<Dataset {self.canonical_id} | {self.dataset_name} | {self.trust_level}>"
+        canonical_id = self.__dict__.get("canonical_id", "detached")
+        dataset_name = self.__dict__.get("dataset_name", "detached")
+        trust_level = self.__dict__.get("trust_level", "detached")
+        return f"<Dataset {canonical_id} | {dataset_name} | {trust_level}>"
 
 
 class DatasetSchema(Base):
@@ -135,7 +138,9 @@ class DatasetSchema(Base):
     )
 
     def __repr__(self):
-        return f"<DatasetSchema dataset={self.dataset_id} v={self.schema_version}>"
+        dataset_id = self.__dict__.get("dataset_id", "detached")
+        schema_version = self.__dict__.get("schema_version", "detached")
+        return f"<DatasetSchema dataset={dataset_id} v={schema_version}>"
 
 
 class ProvenanceRecord(Base):
@@ -165,7 +170,9 @@ class ProvenanceRecord(Base):
     )
 
     def __repr__(self):
-        return f"<ProvenanceRecord dataset={self.dataset_id} event={self.event_type}>"
+        dataset_id = self.__dict__.get("dataset_id", "detached")
+        event_type = self.__dict__.get("event_type", "detached")
+        return f"<ProvenanceRecord dataset={dataset_id} event={event_type}>"
 
 
 class DatasetRelationship(Base):
@@ -189,7 +196,9 @@ class DatasetRelationship(Base):
     )
 
     def __repr__(self):
-        return f"<DatasetRelationship {self.parent_dataset_id} → {self.child_dataset_id}>"
+        parent_id = self.__dict__.get("parent_dataset_id", "detached")
+        child_id = self.__dict__.get("child_dataset_id", "detached")
+        return f"<DatasetRelationship {parent_id} -> {child_id}>"
     
 
 class OnboardingStatus(str, PyEnum):
