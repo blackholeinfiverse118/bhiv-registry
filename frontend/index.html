@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BHIV Registry — Dataset Explorer</title>
+    
+    <!-- Google Fonts: Outfit (headings) & Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom styling -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-circle-nodes"></i>
+                </div>
+                <div class="brand-info">
+                    <h1>BHIV Registry</h1>
+                    <span class="sub-brand">TANTRA Ecosystem</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#catalog" class="nav-item" id="nav-catalog">
+                    <i class="fa-solid fa-database"></i>
+                    <span>Dataset Catalog</span>
+                </a>
+                <a href="#schemas" class="nav-item" id="nav-schemas">
+                    <i class="fa-solid fa-file-code"></i>
+                    <span>Schema Hub</span>
+                </a>
+                <a href="#lineage" class="nav-item" id="nav-lineage">
+                    <i class="fa-solid fa-diagram-project"></i>
+                    <span>Lineage Explorer</span>
+                </a>
+                <a href="#onboarding" class="nav-item" id="nav-onboarding">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                    <span>Onboarding Portal</span>
+                    <span class="badge" id="onboarding-pending-badge" style="display: none;">0</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="connection-status">
+                    <span class="status-indicator online" id="api-status-indicator"></span>
+                    <span id="api-status-text">Backend Connected</span>
+                </div>
+                <div class="registry-id">
+                    <span>ID: BHIV-IDU-REGISTRY-V1</span>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Global Header -->
+            <header class="main-header">
+                <div class="header-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="global-search-input" placeholder="Search datasets, schemas, owners...">
+                </div>
+                <div class="header-meta">
+                    <div class="tantra-badge">
+                        <span class="badge-dot pulsating"></span>
+                        <span class="badge-label">TANTRA CONVERGENCE: V1</span>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="content-viewport">
+                <!-- VIEW 1: DASHBOARD -->
+                <section id="view-dashboard" class="viewport-section active">
+                    <div class="view-header">
+                        <h2>System Registry Dashboard</h2>
+                        <p>High-level metrics, trust distribution, and global provenance integrity.</p>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="stats-grid" id="dashboard-stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon purple"><i class="fa-solid fa-server"></i></div>
+                            <div class="stat-data">
+                                <span class="stat-label">Total Datasets</span>
+                                <h3 id="stat-total-datasets">-</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="stat-data">
+                                <span class="stat-label">Verified & Trusted</span>
+                                <h3 id="stat-trusted-datasets">-</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon blue"><i class="fa-solid fa-rotate-left"></i></div>
+                            <div class="stat-data">
+                                <span class="stat-label">Replay Safe</span>
+                                <h3 id="stat-replay-datasets">-</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon red"><i class="fa-solid fa-circle-exclamation"></i></div>
+                            <div class="stat-data">
+                                <span class="stat-label">Quarantined</span>
+                                <h3 id="stat-quarantined-datasets">-</h3>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dashboard-details">
+                        <!-- Left Side: Trust & Compatibility Distributions -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-chart-pie"></i> Trust Classification</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="distribution-list" id="trust-distribution-list">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side: System Health & Provenance Audit -->
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3><i class="fa-solid fa-circle-check"></i> Provenance Integrity Audit</h3>
+                                <button class="btn btn-sm btn-outline" id="btn-run-provenance-audit">
+                                    <i class="fa-solid fa-arrows-rotate"></i> Run Audit
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="audit-status-container">
+                                    <div class="audit-overall-status">
+                                        <div class="audit-ring" id="audit-ring-indicator">
+                                            <span id="audit-score-text">-</span>
+                                        </div>
+                                        <div class="audit-summary">
+                                            <h4 id="audit-status-title">Awaiting Audit</h4>
+                                            <p id="audit-status-desc">Click "Run Audit" to validate all provenance chains in the registry.</p>
+                                        </div>
+                                    </div>
+                                    <div class="audit-details-list" id="audit-reports-list">
+                                        <!-- Rendered dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- VIEW 2: DATASET CATALOG -->
+                <section id="view-catalog" class="viewport-section">
+                    <div class="view-header">
+                        <h2>Dataset Catalog</h2>
+                        <p>Explore canonical dataset listings, domain classifications, and trust metrics.</p>
+                    </div>
+                    
+                    <div class="catalog-layout">
+                        <!-- Catalog Filters -->
+                        <div class="catalog-filters card">
+                            <h3><i class="fa-solid fa-filter"></i> Metadata Filters</h3>
+                            
+                            <div class="filter-group">
+                                <label for="filter-domain">Primary Domain</label>
+                                <select id="filter-domain">
+                                    <option value="">All Domains</option>
+                                    <option value="replay">Replay</option>
+                                    <option value="governance">Governance</option>
+                                    <option value="recovery">Recovery</option>
+                                    <option value="lineage">Lineage</option>
+                                    <option value="trust">Trust</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="filter-trust">Trust Level</label>
+                                <select id="filter-trust">
+                                    <option value="">All Levels</option>
+                                    <option value="VERIFIED">VERIFIED</option>
+                                    <option value="TRUSTED">TRUSTED</option>
+                                    <option value="PROVISIONAL">PROVISIONAL</option>
+                                    <option value="UNVERIFIED">UNVERIFIED</option>
+                                    <option value="QUARANTINE">QUARANTINE</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="filter-replay">Replay Compatibility</label>
+                                <select id="filter-replay">
+                                    <option value="">All Compatibilities</option>
+                                    <option value="FULL">FULL</option>
+                                    <option value="PARTIAL">PARTIAL</option>
+                                    <option value="CONDITIONAL">CONDITIONAL</option>
+                                    <option value="NONE">NONE</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="filter-simulation">Simulation Compatibility</label>
+                                <select id="filter-simulation">
+                                    <option value="">All Compatibilities</option>
+                                    <option value="NATIVE">NATIVE</option>
+                                    <option value="COMPATIBLE">COMPATIBLE</option>
+                                    <option value="ADAPTABLE">ADAPTABLE</option>
+                                    <option value="INCOMPATIBLE">INCOMPATIBLE</option>
+                                </select>
+                            </div>
+                            
+                            <button class="btn btn-primary btn-block" id="btn-apply-filters">
+                                Apply Filters
+                            </button>
+                            <button class="btn btn-outline btn-block" id="btn-reset-filters">
+                                Reset Filters
+                            </button>
+                        </div>
+                        
+                        <!-- Catalog Grid / List -->
+                        <div class="catalog-listings">
+                            <div class="listings-header">
+                                <span id="catalog-count-label">Showing 0 datasets</span>
+                            </div>
+                            
+                            <div class="listings-grid" id="catalog-listings-grid">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- VIEW 3: SCHEMA HUB -->
+                <section id="view-schemas" class="viewport-section">
+                    <div class="view-header">
+                        <h2>Schema Hub</h2>
+                        <p>Govern and version metadata schemas. Inspect, create drafts, and freeze definitions.</p>
+                    </div>
+                    
+                    <div class="schema-layout">
+                        <!-- Left Side: Dataset Schema List Selector -->
+                        <div class="schema-selector-panel card">
+                            <h3>Select Dataset</h3>
+                            <div class="search-input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="schema-dataset-search" placeholder="Filter datasets...">
+                            </div>
+                            <div class="dataset-schema-selector-list" id="schema-datasets-list">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side: Schema Version Inspector & Builder -->
+                        <div class="schema-inspector-panel card" id="schema-inspector-panel">
+                            <div class="panel-empty-state" id="schema-inspector-empty">
+                                <i class="fa-solid fa-file-code"></i>
+                                <p>Select a dataset from the left panel to inspect and govern its schemas.</p>
+                            </div>
+                            
+                            <div class="panel-content" id="schema-inspector-content" style="display: none;">
+                                <div class="inspector-header">
+                                    <div>
+                                        <h3 id="schema-dataset-title">-</h3>
+                                        <span class="canonical-badge" id="schema-dataset-canonical-id">-</span>
+                                    </div>
+                                    <div class="header-actions">
+                                        <button class="btn btn-sm btn-primary" id="btn-create-schema-draft">
+                                            <i class="fa-solid fa-plus"></i> Create Schema Draft
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="schema-versions-tabs" id="schema-versions-tabs">
+                                    <!-- Dynamic tabs per schema version -->
+                                </div>
+                                
+                                <div class="schema-version-details" id="schema-version-details">
+                                    <div class="metadata-row">
+                                        <div>
+                                            <span class="meta-label">Status:</span>
+                                            <span class="badge" id="inspect-schema-status">-</span>
+                                        </div>
+                                        <div>
+                                            <span class="meta-label">Created By:</span>
+                                            <strong id="inspect-schema-author">-</strong>
+                                        </div>
+                                        <div>
+                                            <span class="meta-label">Date:</span>
+                                            <strong id="inspect-schema-date">-</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="schema-actions-bar" id="schema-actions-bar">
+                                        <!-- Actions rendered dynamically depending on status -->
+                                    </div>
+                                    
+                                    <div class="fields-definition-table-container">
+                                        <h4>Field Definitions</h4>
+                                        <table class="fields-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Field Name</th>
+                                                    <th>Type</th>
+                                                    <th>Nullable</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="schema-fields-tbody">
+                                                <!-- Dynamic rows -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- VIEW 4: LINEAGE EXPLORER -->
+                <section id="view-lineage" class="viewport-section">
+                    <div class="view-header">
+                        <h2>Lineage Explorer</h2>
+                        <p>Inspect parents, child datasets, and operational dependencies across the registry.</p>
+                    </div>
+                    
+                    <div class="lineage-layout">
+                        <!-- Lineage Selector -->
+                        <div class="lineage-sidebar card">
+                            <h3>Select Root Dataset</h3>
+                            <div class="search-input-wrapper">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="lineage-dataset-search" placeholder="Filter datasets...">
+                            </div>
+                            <div class="lineage-selector-list" id="lineage-datasets-list">
+                                <!-- Dynamic listing -->
+                            </div>
+                        </div>
+                        
+                        <!-- Lineage Canvas -->
+                        <div class="lineage-canvas-panel card">
+                            <div class="lineage-canvas-header">
+                                <h3 id="lineage-canvas-title">Federated Lineage Visualization</h3>
+                                <div class="canvas-actions">
+                                    <button class="btn btn-sm btn-primary" id="btn-add-relationship" style="display: none;">
+                                        <i class="fa-solid fa-circle-plus"></i> Define Dependency
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="canvas-empty" id="lineage-canvas-empty">
+                                <i class="fa-solid fa-diagram-project"></i>
+                                <p>Select a dataset from the left panel to map its lineage and dependencies.</p>
+                            </div>
+                            
+                            <div class="canvas-container" id="lineage-canvas-container" style="display: none;">
+                                <div class="lineage-graph" id="lineage-graph-nodes">
+                                    <!-- Rendered dynamically as interactive nodes -->
+                                </div>
+                                <svg class="lineage-connections-svg" id="lineage-graph-svg">
+                                    <!-- Rendered dynamically with connection lines -->
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- VIEW 5: ONBOARDING PORTAL -->
+                <section id="view-onboarding" class="viewport-section">
+                    <div class="view-header">
+                        <h2>Onboarding Portal</h2>
+                        <p>Submit and review new datasets before formal inclusion into the canonical registry.</p>
+                    </div>
+                    
+                    <div class="onboarding-layout">
+                        <!-- Submit Form -->
+                        <div class="onboarding-form-card card">
+                            <h3><i class="fa-solid fa-paper-plane"></i> Submit Dataset Onboarding Request</h3>
+                            <form id="onboarding-submit-form" class="cyber-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="onboard-name">Dataset Name *</label>
+                                        <input type="text" id="onboard-name" placeholder="e.g. market_equity" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="onboard-canonical-id">Proposed Canonical ID *</label>
+                                        <input type="text" id="onboard-canonical-id" placeholder="BHIV-DS-{DOMAIN}-{NAME}-{NUMBER}" required>
+                                        <span class="input-tip">Follow convention: BHIV-DS-DOMAIN-NAME-001</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="onboard-description">Description</label>
+                                    <textarea id="onboard-description" rows="3" placeholder="Describe what data this metadata describes..."></textarea>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="onboard-domain">Primary Domain *</label>
+                                        <input type="text" id="onboard-domain" placeholder="e.g. market" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="onboard-tags">Domain Tags (comma-separated)</label>
+                                        <input type="text" id="onboard-tags" placeholder="e.g. equity, stocks, prices">
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="onboard-source">Source System *</label>
+                                        <input type="text" id="onboard-source" placeholder="e.g. NYSE Ingestion Engine" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="onboard-owner">Owner Name *</label>
+                                        <input type="text" id="onboard-owner" placeholder="e.g. Soham" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="onboard-team">Owner Team</label>
+                                        <input type="text" id="onboard-team" placeholder="e.g. Fullstack UI Team">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="onboard-submitter">Submitted By *</label>
+                                        <input type="text" id="onboard-submitter" placeholder="e.g. Soham" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="onboard-trust">Proposed Trust Level</label>
+                                        <select id="onboard-trust">
+                                            <option value="UNVERIFIED">UNVERIFIED (Default)</option>
+                                            <option value="PROVISIONAL">PROVISIONAL</option>
+                                            <option value="TRUSTED">TRUSTED</option>
+                                            <option value="VERIFIED">VERIFIED</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="onboard-replay">Proposed Replay Compatibility</label>
+                                        <select id="onboard-replay">
+                                            <option value="NONE">NONE (Default)</option>
+                                            <option value="CONDITIONAL">CONDITIONAL</option>
+                                            <option value="PARTIAL">PARTIAL</option>
+                                            <option value="FULL">FULL</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="onboard-notes">Submission Notes</label>
+                                    <textarea id="onboard-notes" rows="2" placeholder="Lineage reference, transformation details, etc."></textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary" id="btn-submit-onboarding">
+                                    Submit Onboarding Request
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Onboarding Review Queue -->
+                        <div class="onboarding-queue-card card">
+                            <h3><i class="fa-solid fa-list-check"></i> Pending Review Queue</h3>
+                            <div class="queue-list" id="onboarding-queue-list">
+                                <!-- Dynamic queue items -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+    
+    <!-- MODAL: DATASET DETAILS DRAWER (Slide In from Right) -->
+    <div class="drawer-overlay" id="dataset-drawer-overlay">
+        <div class="drawer" id="dataset-drawer">
+            <button class="drawer-close" id="btn-close-drawer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="drawer-content" id="dataset-drawer-content">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL: CREATE SCHEMA DRAFT -->
+    <div class="modal-overlay" id="schema-modal-overlay">
+        <div class="modal card">
+            <div class="modal-header">
+                <h3>Create Schema Draft</h3>
+                <button class="modal-close" id="btn-close-schema-modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="schema-draft-form">
+                    <div class="form-group">
+                        <label for="schema-version-input">Schema Version *</label>
+                        <input type="text" id="schema-version-input" placeholder="e.g. 1.0.0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="schema-author-input">Created By *</label>
+                        <input type="text" id="schema-author-input" placeholder="e.g. Soham" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="schema-notes-input">Schema Notes</label>
+                        <textarea id="schema-notes-input" rows="2" placeholder="Describe these schema fields..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Fields JSON Array *</label>
+                        <textarea id="schema-fields-json" rows="8" placeholder='[
+  {"name": "event_id", "type": "uuid", "nullable": false, "description": "Primary event ID"},
+  {"name": "payload", "type": "jsonb", "nullable": true, "description": "Metadata payload"}
+]' required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="btn-cancel-schema-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Draft</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD RELATIONSHIP -->
+    <div class="modal-overlay" id="relationship-modal-overlay">
+        <div class="modal card">
+            <div class="modal-header">
+                <h3>Define Dataset Relationship</h3>
+                <button class="modal-close" id="btn-close-relationship-modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="relationship-form">
+                    <div class="form-group">
+                        <label>Parent Dataset (Source)</label>
+                        <input type="text" id="relation-parent-name" readonly class="readonly-input">
+                        <input type="hidden" id="relation-parent-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="relation-child-id">Child Dataset (Target)</label>
+                        <select id="relation-child-id" required>
+                            <!-- Rendered dynamically -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="relation-type">Relationship Type *</label>
+                        <select id="relation-type" required>
+                            <option value="DERIVED_FROM">DERIVED_FROM</option>
+                            <option value="DEPENDS_ON">DEPENDS_ON</option>
+                            <option value="MERGED_FROM">MERGED_FROM</option>
+                            <option value="FILTERED_FROM">FILTERED_FROM</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="relation-desc">Description</label>
+                        <textarea id="relation-desc" rows="2" placeholder="Brief description of the dependency relationship..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="relation-creator">Created By *</label>
+                        <input type="text" id="relation-creator" placeholder="e.g. Soham" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" id="btn-cancel-relationship-modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Define link</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast notifications -->
+    <div id="toast-container" class="toast-container"></div>
+    
+    <script type="module" src="app.js"></script>
+</body>
+</html>

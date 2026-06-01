@@ -33,6 +33,24 @@ app.add_middleware(
 
 app.include_router(api_router)
 
+from fastapi.exceptions import ResponseValidationError
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import logging
+
+logger = logging.getLogger("uvicorn.error")
+
+@app.exception_handler(ResponseValidationError)
+async def response_validation_exception_handler(request: Request, exc: ResponseValidationError):
+    logger.error(f"Response Validation Error details: {exc.errors()}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Response Validation Error",
+            "errors": exc.errors()
+        }
+    )
+
 
 @app.get("/", tags=["Health"])
 async def root():

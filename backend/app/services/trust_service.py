@@ -93,7 +93,7 @@ class TrustService:
             trust_at_event=new_trust,
             recorded_by=payload.verified_by,
             notes=(
-                f"Trust transition: {old_trust.value} → {new_trust.value}. "
+                f"Trust transition: {old_trust.value} -> {new_trust.value}. "
                 f"Authorized by: {payload.verified_by}. "
                 f"Reason: {payload.governance_notes or 'Not specified'}"
             ),
@@ -101,6 +101,7 @@ class TrustService:
         )
         db.add(provenance)
         await db.flush()
+        await db.refresh(dataset)
         return dataset
 
     @staticmethod
