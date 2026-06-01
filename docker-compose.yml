@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: bhiv_mdu_db
+    environment:
+      POSTGRES_USER: bhiv
+      POSTGRES_PASSWORD: bhiv_secret
+      POSTGRES_DB: bhiv_registry
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bhiv -d bhiv_registry"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: bhiv_mdu_api
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        echo 'Running migrations...' &&
+        alembic upgrade head &&
+        echo 'Starting API...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000
+      "
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://bhiv:bhiv_secret@db:5432/bhiv_registry
+      APP_ENV: production
+      DEBUG: "false"
+      REGISTRY_ID: BHIV-IDU-REGISTRY-V1
+      TANTRA_ECOSYSTEM_VERSION: V1
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
