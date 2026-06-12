@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.router import api_router
 from app.db.base import init_db
+from app.middleware import ApiKeyAuthMiddleware
 
 
 @asynccontextmanager
@@ -30,6 +31,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(ApiKeyAuthMiddleware)
 
 app.include_router(api_router)
 

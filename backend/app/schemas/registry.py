@@ -361,3 +361,30 @@ class OnboardingResponse(BaseModel):
     registered_dataset_id: Optional[UUID]
 
     model_config = {"from_attributes": True}
+
+
+# ─────────────────────────────────────────────
+# AUDIT LOG SCHEMAS
+# ─────────────────────────────────────────────
+
+class AuditLogResponse(BaseModel):
+    id: UUID
+    method: str
+    path: str
+    api_key_owner: Optional[str]
+    status_code: int
+    client_host: Optional[str]
+    timestamp: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ApiKeyResponse(BaseModel):
+    id: UUID
+    owner_name: str
+    description: Optional[str]
+    is_active: bool
+    created_at: datetime
+    last_used_at: Optional[datetime]
+
+    model_config = {"from_attributes": True}

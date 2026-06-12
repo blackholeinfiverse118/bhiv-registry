@@ -259,3 +259,38 @@ class DatasetOnboardingRequest(Base):
 
     def __repr__(self):
         return f"<OnboardingRequest {self.proposed_canonical_id} | {self.status}>"
+    
+
+class ApiKey(Base):
+    __tablename__ = "api_keys"
+
+    id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    key         = Column(String(64), unique=True, nullable=False, index=True)
+    owner_name  = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    is_active   = Column(Boolean, nullable=False, default=True)
+    created_at  = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_used_at = Column(DateTime(timezone=True), nullable=True)
+
+    def __repr__(self):
+        return f"<ApiKey owner={self.owner_name} active={self.is_active}>"
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id          = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    method      = Column(String(10), nullable=False)
+    path        = Column(String(500), nullable=False)
+    api_key_owner = Column(String(255), nullable=True)
+    status_code = Column(Integer, nullable=False)
+    client_host = Column(String(100), nullable=True)
+    timestamp   = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    __table_args__ = (
+        Index("ix_audit_timestamp", "timestamp"),
+        Index("ix_audit_owner", "api_key_owner"),
+    )
+
+    def __repr__(self):
+        return f"<AuditLog {self.method} {self.path} -> {self.status_code}>"
