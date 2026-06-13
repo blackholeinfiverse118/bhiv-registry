@@ -9,6 +9,9 @@ import httpx
 
 BASE_URL = "http://localhost:8000/api/v1"
 
+API_KEY = "ankita_svacs_nicai_2720440eb88befb90043d700a55e4721"
+HEADERS = {"X-API-Key": API_KEY}
+
 SCHEMAS = [
     {
         "canonical_id": "BHIV-DS-REPLAY-SEMANTIC-EVENTS-001",
@@ -116,7 +119,7 @@ async def register_schemas():
             print(f"Processing: {canonical_id}")
 
             # Get dataset
-            r = await client.get(f"{BASE_URL}/datasets/canonical/{canonical_id}")
+            r = await client.get(f"{BASE_URL}/datasets/canonical/{canonical_id}", headers=HEADERS)
             if r.status_code != 200:
                 print(f"  SKIPPED: Dataset not found in registry")
                 print()
@@ -125,7 +128,7 @@ async def register_schemas():
             dataset_id = r.json()["id"]
 
             # Check if schema already exists
-            existing_r = await client.get(f"{BASE_URL}/schemas/dataset/{dataset_id}")
+            existing_r = await client.get(f"{BASE_URL}/schemas/dataset/{dataset_id}", headers=HEADERS)
             if existing_r.status_code == 200 and len(existing_r.json()) > 0:
                 print(f"  SCHEMA ALREADY EXISTS: v{existing_r.json()[0]['schema_version']}")
                 print()
@@ -155,13 +158,13 @@ async def register_schemas():
                 "created_by": schema_def["created_by"]
             }
 
-            sr = await client.post(f"{BASE_URL}/schemas/", json=payload)
+            sr = await client.post(f"{BASE_URL}/schemas/", json=payload, headers=HEADERS)
             if sr.status_code == 201:
                 schema_id = sr.json()["id"]
                 print(f"  SCHEMA REGISTERED: v1.0.0 | {len(field_defs)} fields")
 
                 # Freeze it
-                fr = await client.post(f"{BASE_URL}/schemas/{schema_id}/freeze")
+                fr = await client.post(f"{BASE_URL}/schemas/{schema_id}/freeze", headers=HEADERS)
                 if fr.status_code == 200:
                     print(f"  SCHEMA FROZEN: immutable and replay-safe")
             else:

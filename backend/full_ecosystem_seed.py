@@ -9,6 +9,9 @@ import httpx
 
 BASE_URL = "http://localhost:8000/api/v1"
 
+API_KEY = "ankita_svacs_nicai_2720440eb88befb90043d700a55e4721"
+HEADERS = {"X-API-Key": API_KEY}
+
 VIJAY_DATASETS = [
     {
         "canonical_id": "BHIV-DS-REPLAY-SEMANTIC-EVENTS-001",
@@ -184,12 +187,12 @@ async def seed():
         dataset_ids = {}
 
         for ds in VIJAY_DATASETS:
-            r = await client.post(f"{BASE_URL}/datasets/", json=ds)
+            r = await client.post(f"{BASE_URL}/datasets/", json=ds, headers=HEADERS)
             if r.status_code == 201:
                 dataset_ids[ds["canonical_id"]] = r.json()["id"]
                 print(f"REGISTERED: {ds['canonical_id']}")
             elif r.status_code == 409:
-                er = await client.get(f"{BASE_URL}/datasets/canonical/{ds['canonical_id']}")
+                er = await client.get(f"{BASE_URL}/datasets/canonical/{ds['canonical_id']}", headers=HEADERS)
                 dataset_ids[ds["canonical_id"]] = er.json()["id"]
                 print(f"EXISTS: {ds['canonical_id']}")
             else:
@@ -208,7 +211,7 @@ async def seed():
                 continue
 
             # Check existing
-            existing_r = await client.get(f"{BASE_URL}/schemas/dataset/{dataset_id}")
+            existing_r = await client.get(f"{BASE_URL}/schemas/dataset/{dataset_id}", headers=HEADERS)
             if existing_r.status_code == 200 and len(existing_r.json()) > 0:
                 print(f"SCHEMA EXISTS: {canonical_id}")
                 continue
@@ -236,11 +239,11 @@ async def seed():
                 "created_by": "Vijay"
             }
 
-            sr = await client.post(f"{BASE_URL}/schemas/", json=payload)
+            sr = await client.post(f"{BASE_URL}/schemas/", json=payload, headers=HEADERS)
             if sr.status_code == 201:
                 schema_id = sr.json()["id"]
                 print(f"SCHEMA REGISTERED: {canonical_id} | {len(field_defs)} fields")
-                fr = await client.post(f"{BASE_URL}/schemas/{schema_id}/freeze")
+                fr = await client.post(f"{BASE_URL}/schemas/{schema_id}/freeze", headers=HEADERS)
                 if fr.status_code == 200:
                     print(f"SCHEMA FROZEN: {canonical_id}")
             else:
@@ -248,7 +251,7 @@ async def seed():
 
         print()
         print("=== PHASE 3: REGISTRY SUMMARY ===")
-        sr = await client.get(f"{BASE_URL}/discovery/summary")
+        sr = await client.get(f"{BASE_URL}/discovery/summary", headers=HEADERS)
         if sr.status_code == 200:
             summary = sr.json()
             print(f"Total datasets: {summary['total_datasets']}")

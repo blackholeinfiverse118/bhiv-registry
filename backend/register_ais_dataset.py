@@ -15,6 +15,9 @@ import httpx
 
 BASE_URL = "http://localhost:8000/api/v1"
 
+API_KEY = "ankita_svacs_nicai_2720440eb88befb90043d700a55e4721"
+HEADERS = {"X-API-Key": API_KEY}
+
 async def register_ais_dataset():
     async with httpx.AsyncClient(timeout=30.0) as client:
 
@@ -46,13 +49,13 @@ async def register_ais_dataset():
             }
         }
 
-        r = await client.post(f"{BASE_URL}/datasets/", json=dataset_payload)
+        r = await client.post(f"{BASE_URL}/datasets/", json=dataset_payload, headers=HEADERS)
         if r.status_code == 201:
             dataset = r.json()
             print(f"REGISTERED: {dataset['canonical_id']} | ID: {dataset['id']}")
         elif r.status_code == 409:
             print(f"ALREADY EXISTS: fetching existing record...")
-            er = await client.get(f"{BASE_URL}/datasets/canonical/BHIV-DS-MARITIME-AIS-LIVE-001")
+            er = await client.get(f"{BASE_URL}/datasets/canonical/BHIV-DS-MARITIME-AIS-LIVE-001", headers=HEADERS)
             dataset = er.json()
             print(f"FOUND: {dataset['canonical_id']} | ID: {dataset['id']}")
         else:
@@ -126,14 +129,14 @@ async def register_ais_dataset():
             "created_by": "Ankita"
         }
 
-        sr = await client.post(f"{BASE_URL}/schemas/", json=schema_payload)
+        sr = await client.post(f"{BASE_URL}/schemas/", json=schema_payload, headers=HEADERS)
         if sr.status_code == 201:
             schema = sr.json()
             schema_id = schema["id"]
             print(f"SCHEMA REGISTERED: v{schema['schema_version']} | ID: {schema_id}")
         elif sr.status_code == 409:
             print(f"SCHEMA ALREADY EXISTS: fetching existing...")
-            schemas_r = await client.get(f"{BASE_URL}/schemas/dataset/{dataset_id}")
+            schemas_r = await client.get(f"{BASE_URL}/schemas/dataset/{dataset_id}", headers=HEADERS)
             schemas = schemas_r.json()
             schema = schemas[0]
             schema_id = schema["id"]
@@ -145,7 +148,7 @@ async def register_ais_dataset():
 
         # Step 3 - Freeze the schema
         print("Step 3: Freezing schema...")
-        fr = await client.post(f"{BASE_URL}/schemas/{schema_id}/freeze")
+        fr = await client.post(f"{BASE_URL}/schemas/{schema_id}/freeze", headers=HEADERS)
         if fr.status_code == 200:
             print(f"SCHEMA FROZEN: v{fr.json()['schema_version']} -- now immutable and replay-safe")
         print()
@@ -168,7 +171,7 @@ async def register_ais_dataset():
             }
         }
 
-        pr = await client.post(f"{BASE_URL}/datasets/{dataset_id}/provenance", json=prov_payload)
+        pr = await client.post(f"{BASE_URL}/datasets/{dataset_id}/provenance", json=prov_payload, headers=HEADERS)
         if pr.status_code == 201:
             print(f"PROVENANCE ADDED: INGESTION event recorded")
         print()
@@ -184,7 +187,7 @@ async def register_ais_dataset():
             "is_replay_safe": True
         }
 
-        vr = await client.post(f"{BASE_URL}/datasets/{dataset_id}/provenance", json=val_prov_payload)
+        vr = await client.post(f"{BASE_URL}/datasets/{dataset_id}/provenance", json=val_prov_payload, headers=HEADERS)
         if vr.status_code == 201:
             print(f"PROVENANCE ADDED: VALIDATION event recorded")
         print()
@@ -200,7 +203,7 @@ async def register_ais_dataset():
             "is_replay_safe": False
         }
 
-        tpr = await client.post(f"{BASE_URL}/datasets/{dataset_id}/provenance", json=trust_prov_payload)
+        tpr = await client.post(f"{BASE_URL}/datasets/{dataset_id}/provenance", json=trust_prov_payload, headers=HEADERS)
         if tpr.status_code == 201:
             print(f"PROVENANCE ADDED: TRUST_CHANGE event recorded")
         print()
@@ -218,14 +221,14 @@ async def register_ais_dataset():
                 "integration_status": "ACTIVE"
             }
         }
-        ur = await client.patch(f"{BASE_URL}/datasets/{dataset_id}", json=update_payload)
+        ur = await client.patch(f"{BASE_URL}/datasets/{dataset_id}", json=update_payload, headers=HEADERS)
         if ur.status_code == 200:
             print(f"DATASET UPDATED: Extended metadata added")
         print()
 
         # Step 7 - Validate provenance chain
         print("Step 7: Validating provenance chain...")
-        vpr = await client.get(f"{BASE_URL}/discovery/provenance/validate/{dataset_id}")
+        vpr = await client.get(f"{BASE_URL}/discovery/provenance/validate/{dataset_id}", headers=HEADERS)
         if vpr.status_code == 200:
             validation = vpr.json()
             print(f"PROVENANCE VALID: {validation['valid']}")
