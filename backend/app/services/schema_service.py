@@ -111,6 +111,14 @@ class SchemaService:
 
         schema.status = SchemaStatus.FROZEN
         schema.frozen_at = datetime.now(timezone.utc)
+        
+        # Updated parent dataset to point to this frozen schema
+        from app.models.registry import Dataset
+        dataset = await db.get(Dataset, schema.dataset_id)
+        if dataset:
+            dataset.current_schema_id = schema.id
+            dataset.schema_version = schema.schema_version
+        
         await db.flush()
         return schema
 
