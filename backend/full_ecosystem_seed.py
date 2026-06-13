@@ -6,10 +6,13 @@ Safe to run multiple times -- skips existing records.
 
 import asyncio
 import httpx
+import os
 
 BASE_URL = "http://localhost:8000/api/v1"
 
-API_KEY = "ankita_svacs_nicai_2720440eb88befb90043d700a55e4721"
+API_KEY = os.environ.get("MDU_API_KEY", "")
+if not API_KEY:
+    raise SystemExit("Set MDU_API_KEY environment variable before running this script. Example: $env:MDU_API_KEY='your_key_here'")
 HEADERS = {"X-API-Key": API_KEY}
 
 VIJAY_DATASETS = [
